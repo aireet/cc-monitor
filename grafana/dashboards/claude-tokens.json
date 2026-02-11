@@ -1,0 +1,310 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Input Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(claude_model_input_tokens_total)", "legendFormat": "Input Tokens", "refId": "A" }]
+    },
+    {
+      "id": 2,
+      "title": "Total Output Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(claude_model_output_tokens_total)", "legendFormat": "Output Tokens", "refId": "A" }]
+    },
+    {
+      "id": 3,
+      "title": "Total Cache Read Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(claude_model_cache_read_tokens_total)", "legendFormat": "Cache Read", "refId": "A" }]
+    },
+    {
+      "id": 4,
+      "title": "Total Messages",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_messages_total", "legendFormat": "Messages", "refId": "A" }]
+    },
+    {
+      "id": 5,
+      "title": "Total Sessions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "yellow", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_sessions_total", "legendFormat": "Sessions", "refId": "A" }]
+    },
+    {
+      "id": 6,
+      "title": "Today Tool Calls",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_today_tool_calls", "legendFormat": "Tool Calls", "refId": "A" }]
+    },
+    {
+      "id": 10,
+      "title": "Token Usage by Model (Cumulative)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 20, "lineWidth": 2, "pointSize": 5, "showPoints": "auto", "spanNulls": false, "stacking": { "mode": "none" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "claude_model_input_tokens_total", "legendFormat": "{{model}} input", "refId": "A" },
+        { "expr": "claude_model_output_tokens_total", "legendFormat": "{{model}} output", "refId": "B" }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Model Token Breakdown",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        { "expr": "claude_model_input_tokens_total + claude_model_output_tokens_total + claude_model_cache_read_tokens_total", "legendFormat": "{{model}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Today's Tokens by Model",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1000000 },
+            { "color": "red", "value": 10000000 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "targets": [{ "expr": "claude_today_tokens", "legendFormat": "{{model}}", "refId": "A" }]
+    },
+    {
+      "id": 20,
+      "title": "Daily Token Usage",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 80, "lineWidth": 1, "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" },
+        "xTickLabelRotation": -45,
+        "barWidth": 0.8,
+        "stacking": "normal"
+      },
+      "targets": [{ "expr": "claude_daily_tokens", "legendFormat": "{{model}} ({{date}})", "refId": "A", "instant": true }],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": { "mode": "columns", "valueLabel": "model", "keepLabels": ["date"] }
+        },
+        { "id": "sortBy", "options": { "sort": [{ "field": "date" }] } }
+      ]
+    },
+    {
+      "id": 30,
+      "title": "Daily Messages / Sessions / Tool Calls",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 80 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Messages" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Sessions" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Tool Calls" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" },
+        "xTickLabelRotation": -45,
+        "barWidth": 0.6,
+        "groupWidth": 0.8,
+        "stacking": "none"
+      },
+      "targets": [
+        { "expr": "claude_daily_messages", "legendFormat": "Messages ({{date}})", "refId": "A", "instant": true },
+        { "expr": "claude_daily_sessions", "legendFormat": "Sessions ({{date}})", "refId": "B", "instant": true },
+        { "expr": "claude_daily_tool_calls", "legendFormat": "Tool Calls ({{date}})", "refId": "C", "instant": true }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": { "mode": "columns", "keepLabels": ["date"] }
+        },
+        { "id": "sortBy", "options": { "sort": [{ "field": "date" }] } }
+      ]
+    },
+    {
+      "id": 40,
+      "title": "Activity by Hour of Day",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 60 },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "blue", "value": null },
+            { "color": "green", "value": 5 },
+            { "color": "yellow", "value": 10 },
+            { "color": "red", "value": 15 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "hidden" },
+        "tooltip": { "mode": "single" },
+        "barWidth": 0.7,
+        "colorByField": "Value"
+      },
+      "targets": [{ "expr": "claude_hour_sessions", "legendFormat": "{{hour}}:00", "refId": "A", "instant": true }],
+      "transformations": [
+        { "id": "labelsToFields", "options": { "mode": "columns", "keepLabels": ["hour"] } },
+        { "id": "sortBy", "options": { "sort": [{ "field": "hour" }] } }
+      ]
+    },
+    {
+      "id": 41,
+      "title": "Model Usage Detail",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Model" }, "properties": [{ "id": "custom.width", "value": 200 }] }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Input Tokens", "desc": true }] },
+      "targets": [
+        { "expr": "claude_model_input_tokens_total", "legendFormat": "{{model}}", "refId": "A", "instant": true, "format": "table" },
+        { "expr": "claude_model_output_tokens_total", "legendFormat": "{{model}}", "refId": "B", "instant": true, "format": "table" },
+        { "expr": "claude_model_cache_read_tokens_total", "legendFormat": "{{model}}", "refId": "C", "instant": true, "format": "table" },
+        { "expr": "claude_model_cache_creation_tokens_total", "legendFormat": "{{model}}", "refId": "D", "instant": true, "format": "table" }
+      ],
+      "transformations": [
+        { "id": "seriesToColumns", "options": { "byField": "model" } },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "model": "Model",
+              "Value #A": "Input Tokens",
+              "Value #B": "Output Tokens",
+              "Value #C": "Cache Read",
+              "Value #D": "Cache Creation"
+            },
+            "excludeByName": { "Time": true, "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true }
+          }
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["claude", "tokens", "ai"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Claude Code Token Monitor",
+  "uid": "claude-token-monitor",
+  "version": 1
+}
