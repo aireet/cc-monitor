@@ -6,10 +6,18 @@
   "links": [],
   "panels": [
     {
+      "id": 100,
+      "title": "",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
       "id": 1,
       "title": "Total Input Tokens",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "gridPos": { "h": 3, "w": 4, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -25,7 +33,7 @@
       "id": 2,
       "title": "Total Output Tokens",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "gridPos": { "h": 3, "w": 4, "x": 4, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -39,9 +47,9 @@
     },
     {
       "id": 3,
-      "title": "Total Cache Read Tokens",
+      "title": "Total Cache Read",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "gridPos": { "h": 3, "w": 4, "x": 8, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -57,7 +65,7 @@
       "id": 4,
       "title": "Total Messages",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "gridPos": { "h": 3, "w": 4, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -73,7 +81,7 @@
       "id": 5,
       "title": "Total Sessions",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "gridPos": { "h": 3, "w": 4, "x": 16, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -87,9 +95,152 @@
     },
     {
       "id": 6,
+      "title": "Total Cost (USD)",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 10 },
+            { "color": "red", "value": 50 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(claude_model_cost_usd)", "legendFormat": "Cost", "refId": "A" }]
+    },
+
+    {
+      "id": 101,
+      "title": "Real-time Activity",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 50,
+      "title": "Live Sessions",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 3 },
+            { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_live_sessions", "legendFormat": "Live Sessions", "refId": "A" }]
+    },
+    {
+      "id": 51,
+      "title": "Live Messages",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "blue", "value": null },
+            { "color": "purple", "value": 50 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_live_messages", "legendFormat": "Live Messages", "refId": "A" }]
+    },
+    {
+      "id": 52,
+      "title": "Input Tokens / min",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 6, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50000 },
+            { "color": "red", "value": 200000 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(rate(claude_model_input_tokens_total[5m])) * 60", "legendFormat": "Input/min", "refId": "A" }]
+    },
+    {
+      "id": 53,
+      "title": "Output Tokens / min",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 9, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 10000 },
+            { "color": "red", "value": 50000 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(rate(claude_model_output_tokens_total[5m])) * 60", "legendFormat": "Output/min", "refId": "A" }]
+    },
+    {
+      "id": 59,
+      "title": "Today Messages",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_today_messages", "legendFormat": "Today Messages", "refId": "A" }]
+    },
+    {
+      "id": 60,
+      "title": "Today Sessions",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 15, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "yellow", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_today_sessions", "legendFormat": "Today Sessions", "refId": "A" }]
+    },
+    {
+      "id": 61,
       "title": "Today Tool Calls",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "gridPos": { "h": 3, "w": 3, "x": 18, "y": 5 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -98,14 +249,482 @@
         },
         "overrides": []
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "value_and_name" },
       "targets": [{ "expr": "claude_today_tool_calls", "legendFormat": "Tool Calls", "refId": "A" }]
+    },
+    {
+      "id": 62,
+      "title": "Today Cost (USD)",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 3, "x": 21, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [{ "expr": "sum(increase(claude_model_cost_usd[24h]))", "legendFormat": "Today Cost", "refId": "A" }]
+    },
+
+    {
+      "id": 54,
+      "title": "Token Increase (5m)",
+      "description": "Token consumption over 5-minute rolling windows, grouped by model",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 30,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "mode": "none" },
+            "drawStyle": "line",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "expr": "sum by (model) (increase(claude_model_input_tokens_total[5m]))", "legendFormat": "{{model}} input", "refId": "A" },
+        { "expr": "sum by (model) (increase(claude_model_output_tokens_total[5m]))", "legendFormat": "{{model}} output", "refId": "B" }
+      ]
+    },
+    {
+      "id": 55,
+      "title": "Live Activity Trend",
+      "description": "Real-time active sessions and messages from live JSONL files",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "drawStyle": "line",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Live Sessions" },
+            "properties": [
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
+              { "id": "custom.fillOpacity", "value": 10 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Live Messages" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "expr": "claude_live_messages", "legendFormat": "Live Messages", "refId": "A" },
+        { "expr": "claude_live_sessions", "legendFormat": "Live Sessions", "refId": "B" }
+      ]
+    },
+    {
+      "id": 56,
+      "title": "Token Rate (tokens/min)",
+      "description": "Token consumption rate per minute, computed from 5m rolling average",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "drawStyle": "line",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "expr": "sum by (model) (rate(claude_model_input_tokens_total[5m])) * 60", "legendFormat": "{{model}} input/min", "refId": "A" },
+        { "expr": "sum by (model) (rate(claude_model_output_tokens_total[5m])) * 60", "legendFormat": "{{model}} output/min", "refId": "B" }
+      ]
+    },
+    {
+      "id": 57,
+      "title": "Cost Trend (USD)",
+      "description": "Cumulative cost over time by model",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "custom": {
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "drawStyle": "line",
+            "gradientMode": "opacity",
+            "stacking": { "mode": "normal" }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "expr": "claude_model_cost_usd", "legendFormat": "{{model}}", "refId": "A" }
+      ]
+    },
+
+    {
+      "id": 105,
+      "title": "Per-Request Insights",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 70,
+      "title": "Live Cost Breakdown",
+      "description": "Per-request cost split: prompt vs completions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "value_and_name" },
+      "targets": [
+        { "expr": "claude_live_cost_usd", "legendFormat": "Total", "refId": "A" },
+        { "expr": "claude_live_cost_prompt_usd", "legendFormat": "Prompt", "refId": "B" },
+        { "expr": "claude_live_cost_completions_usd", "legendFormat": "Completions", "refId": "C" }
+      ]
+    },
+    {
+      "id": 71,
+      "title": "Live Cost by Model",
+      "description": "Cost from active sessions broken down by model",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 4, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "decimals": 4 },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        { "expr": "claude_live_cost_by_model_usd", "legendFormat": "{{model}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 72,
+      "title": "Turn Duration Distribution",
+      "description": "Histogram of assistant turn durations (seconds)",
+      "type": "histogram",
+      "gridPos": { "h": 8, "w": 8, "x": 10, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "fillOpacity": 60 },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" },
+        "bucketSize": 10
+      },
+      "targets": [
+        { "expr": "claude_turn_duration_seconds_bucket", "legendFormat": "{{le}}", "refId": "A", "format": "heatmap" }
+      ]
+    },
+    {
+      "id": 73,
+      "title": "Tool Usage Breakdown",
+      "description": "Tool calls from active sessions by tool name",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "blue", "value": 50 },
+            { "color": "purple", "value": 200 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "targets": [{ "expr": "claude_live_tool_use_total", "legendFormat": "{{tool}}", "refId": "A" }]
+    },
+    {
+      "id": 74,
+      "title": "API Errors",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 2, "x": 0, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_live_api_errors_total", "legendFormat": "API Errors", "refId": "A" }]
+    },
+    {
+      "id": 75,
+      "title": "API Retries",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 2, "x": 2, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "value_and_name" },
+      "targets": [{ "expr": "claude_live_api_retries_total", "legendFormat": "API Retries", "refId": "A" }]
+    },
+
+    {
+      "id": 106,
+      "title": "Operational Health",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 76,
+      "title": "Stop Reason Distribution",
+      "description": "How API responses terminate: end_turn (natural), tool_use (tool call), stop_sequence",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 34 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "end_turn" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "tool_use" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "stop_sequence" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        { "expr": "claude_live_stop_reason_total", "legendFormat": "{{reason}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 77,
+      "title": "Context Compaction Events",
+      "description": "Number of context compaction events and pre-compaction token count trend",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 34 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "drawStyle": "line",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Compact Events" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Avg Pre-Tokens" },
+            "properties": [
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        { "expr": "claude_live_compact_events_total", "legendFormat": "Compact Events", "refId": "A" },
+        { "expr": "claude_compact_pre_tokens_sum / claude_compact_pre_tokens_count", "legendFormat": "Avg Pre-Tokens", "refId": "B" }
+      ]
+    },
+    {
+      "id": 78,
+      "title": "API Errors & Retries Trend",
+      "description": "API error and retry counts over time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 34 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "drawStyle": "line",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "API Errors" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "API Retries" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        { "expr": "claude_live_api_errors_total", "legendFormat": "API Errors", "refId": "A" },
+        { "expr": "claude_live_api_retries_total", "legendFormat": "API Retries", "refId": "B" }
+      ]
+    },
+    {
+      "id": 79,
+      "title": "Web Search & Fetch",
+      "description": "Server-side web search and fetch request counts",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 34 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 30,
+            "lineWidth": 2,
+            "drawStyle": "bars",
+            "gradientMode": "opacity"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Web Searches" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Web Fetches" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "cyan", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        { "expr": "claude_live_web_search_total", "legendFormat": "Web Searches", "refId": "A" },
+        { "expr": "claude_live_web_fetch_total", "legendFormat": "Web Fetches", "refId": "B" }
+      ]
+    },
+
+    {
+      "id": 102,
+      "title": "Cumulative Overview",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 },
+      "collapsed": false,
+      "panels": []
     },
     {
       "id": 10,
       "title": "Token Usage by Model (Cumulative)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -124,7 +743,7 @@
       "id": 11,
       "title": "Model Token Breakdown",
       "type": "piechart",
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 4 },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 43 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": { "unit": "short" },
@@ -144,7 +763,7 @@
       "id": 12,
       "title": "Today's Tokens by Model",
       "type": "bargauge",
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 4 },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 43 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -165,11 +784,20 @@
       },
       "targets": [{ "expr": "claude_today_tokens", "legendFormat": "{{model}}", "refId": "A" }]
     },
+
+    {
+      "id": 103,
+      "title": "Historical Trends",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 51 },
+      "collapsed": false,
+      "panels": []
+    },
     {
       "id": 20,
       "title": "Daily Token Usage",
       "type": "barchart",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 52 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -198,7 +826,7 @@
       "id": 30,
       "title": "Daily Messages / Sessions / Tool Calls",
       "type": "barchart",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 60 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": { "unit": "short", "custom": { "fillOpacity": 80 } },
@@ -229,11 +857,20 @@
         { "id": "sortBy", "options": { "sort": [{ "field": "date" }] } }
       ]
     },
+
+    {
+      "id": 104,
+      "title": "Details",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 },
+      "collapsed": false,
+      "panels": []
+    },
     {
       "id": 40,
       "title": "Activity by Hour of Day",
       "type": "barchart",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 69 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
@@ -264,7 +901,7 @@
       "id": 41,
       "title": "Model Usage Detail",
       "type": "table",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 69 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": { "unit": "short" },
@@ -277,7 +914,8 @@
         { "expr": "claude_model_input_tokens_total", "legendFormat": "{{model}}", "refId": "A", "instant": true, "format": "table" },
         { "expr": "claude_model_output_tokens_total", "legendFormat": "{{model}}", "refId": "B", "instant": true, "format": "table" },
         { "expr": "claude_model_cache_read_tokens_total", "legendFormat": "{{model}}", "refId": "C", "instant": true, "format": "table" },
-        { "expr": "claude_model_cache_creation_tokens_total", "legendFormat": "{{model}}", "refId": "D", "instant": true, "format": "table" }
+        { "expr": "claude_model_cache_creation_tokens_total", "legendFormat": "{{model}}", "refId": "D", "instant": true, "format": "table" },
+        { "expr": "claude_model_cost_usd", "legendFormat": "{{model}}", "refId": "E", "instant": true, "format": "table" }
       ],
       "transformations": [
         { "id": "seriesToColumns", "options": { "byField": "model" } },
@@ -289,9 +927,10 @@
               "Value #A": "Input Tokens",
               "Value #B": "Output Tokens",
               "Value #C": "Cache Read",
-              "Value #D": "Cache Creation"
+              "Value #D": "Cache Creation",
+              "Value #E": "Cost (USD)"
             },
-            "excludeByName": { "Time": true, "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true }
+            "excludeByName": { "Time": true, "Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true, "Time 5": true }
           }
         }
       ]

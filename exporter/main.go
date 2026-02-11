@@ -71,19 +71,72 @@ type DailyModelTokens struct {
 // --- JSONL record structs ---
 
 type JSONLRecord struct {
+	Type    string `json:"type"`
+	Subtype string `json:"subtype,omitempty"`
+
+	// For type=assistant or type=progress (nested)
+	Message *JSONLMessage `json:"message,omitempty"`
+	Data    *JSONLData    `json:"data,omitempty"`
+
+	// For subtype=turn_duration
+	DurationMs *float64 `json:"durationMs,omitempty"`
+
+	// For subtype=api_error
+	RetryAttempt *int     `json:"retryAttempt,omitempty"`
+	MaxRetries   *int     `json:"maxRetries,omitempty"`
+	RetryInMs    *float64 `json:"retryInMs,omitempty"`
+
+	// For subtype=compact_boundary
+	CompactMetadata *CompactMetadata `json:"compactMetadata,omitempty"`
+}
+
+type JSONLData struct {
+	Message *JSONLDataMessage `json:"message,omitempty"`
+}
+
+type JSONLDataMessage struct {
 	Message *JSONLMessage `json:"message,omitempty"`
 }
 
 type JSONLMessage struct {
-	Model string     `json:"model"`
-	Usage JSONLUsage `json:"usage"`
+	Model      string         `json:"model"`
+	Role       string         `json:"role"`
+	StopReason *string        `json:"stop_reason"`
+	Content    []ContentBlock `json:"content"`
+	Usage      JSONLUsage     `json:"usage"`
+}
+
+type ContentBlock struct {
+	Type string `json:"type"`
+	Name string `json:"name,omitempty"` // tool name for tool_use blocks
 }
 
 type JSONLUsage struct {
-	InputTokens              *float64 `json:"input_tokens"`
-	OutputTokens             *float64 `json:"output_tokens"`
-	CacheReadInputTokens     *float64 `json:"cache_read_input_tokens"`
-	CacheCreationInputTokens *float64 `json:"cache_creation_input_tokens"`
+	InputTokens              *float64       `json:"input_tokens"`
+	OutputTokens             *float64       `json:"output_tokens"`
+	CacheReadInputTokens     *float64       `json:"cache_read_input_tokens"`
+	CacheCreationInputTokens *float64       `json:"cache_creation_input_tokens"`
+	Cost                     *float64       `json:"cost"`
+	CostDetails              *CostDetails   `json:"cost_details"`
+	ServerToolUse            *ServerToolUse `json:"server_tool_use"`
+	ServiceTier              *string        `json:"service_tier"`
+	IsByok                   *bool          `json:"is_byok"`
+}
+
+type CostDetails struct {
+	UpstreamInferenceCost            *float64 `json:"upstream_inference_cost"`
+	UpstreamInferencePromptCost      *float64 `json:"upstream_inference_prompt_cost"`
+	UpstreamInferenceCompletionsCost *float64 `json:"upstream_inference_completions_cost"`
+}
+
+type ServerToolUse struct {
+	WebSearchRequests int `json:"web_search_requests"`
+	WebFetchRequests  int `json:"web_fetch_requests"`
+}
+
+type CompactMetadata struct {
+	Trigger   string `json:"trigger"`
+	PreTokens int    `json:"preTokens"`
 }
 
 // --- live session aggregation ---
@@ -99,6 +152,21 @@ type LiveResult struct {
 	ModelUsage   map[string]*LiveModelUsage
 	SessionCount int
 	MessageCount int
+
+	// New per-request metrics from JSONL
+	TotalCost        float64
+	PromptCost       float64
+	CompletionsCost  float64
+	CostByModel      map[string]float64
+	TurnDurations    []float64
+	ToolUseCounts    map[string]int
+	StopReasons      map[string]int
+	APIErrors        int
+	APIRetries       int
+	CompactEvents    int
+	CompactPreTokens []float64
+	WebSearches      int
+	WebFetches       int
 }
 
 // --- helper ---
@@ -154,6 +222,33 @@ type claudeCollector struct {
 
 	// info
 	exporterInfo *prometheus.GaugeVec
+
+	// --- NEW: per-request cost ---
+	liveCostTotal       prometheus.Gauge
+	liveCostPrompt      prometheus.Gauge
+	liveCostCompletions prometheus.Gauge
+	liveCostByModel     *prometheus.GaugeVec
+
+	// --- NEW: turn duration ---
+	turnDuration prometheus.Histogram
+
+	// --- NEW: tool usage breakdown ---
+	toolUseTotal *prometheus.GaugeVec
+
+	// --- NEW: stop reason ---
+	stopReasonTotal *prometheus.GaugeVec
+
+	// --- NEW: API errors ---
+	apiErrorsTotal  prometheus.Gauge
+	apiRetriesTotal prometheus.Gauge
+
+	// --- NEW: context compaction ---
+	compactEventsTotal    prometheus.Gauge
+	compactPreTokensTotal prometheus.Histogram
+
+	// --- NEW: web search / fetch ---
+	webSearchTotal prometheus.Gauge
+	webFetchTotal  prometheus.Gauge
 }
 
 func newCollector(statsFile, claudeDir string) *claudeCollector {
@@ -251,6 +346,69 @@ func newCollector(statsFile, claudeDir string) *claudeCollector {
 			Name: "claude_exporter_info",
 			Help: "Claude Code exporter metadata",
 		}, []string{"stats_file", "claude_dir", "last_computed_date", "first_session_date", "live_sessions"}),
+
+		// --- NEW metrics ---
+
+		liveCostTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_cost_usd",
+			Help: "Total cost in USD from active sessions",
+		}),
+		liveCostPrompt: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_cost_prompt_usd",
+			Help: "Prompt/input cost in USD from active sessions",
+		}),
+		liveCostCompletions: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_cost_completions_usd",
+			Help: "Completions/output cost in USD from active sessions",
+		}),
+		liveCostByModel: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "claude_live_cost_by_model_usd",
+			Help: "Cost in USD from active sessions by model",
+		}, []string{"model"}),
+
+		turnDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name:    "claude_turn_duration_seconds",
+			Help:    "Distribution of assistant turn durations in seconds",
+			Buckets: []float64{5, 10, 20, 30, 60, 120, 300, 600, 1800, 3600},
+		}),
+
+		toolUseTotal: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "claude_live_tool_use_total",
+			Help: "Tool usage count from active sessions by tool name",
+		}, []string{"tool"}),
+
+		stopReasonTotal: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "claude_live_stop_reason_total",
+			Help: "Stop reason count from active sessions",
+		}, []string{"reason"}),
+
+		apiErrorsTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_api_errors_total",
+			Help: "API error count from active sessions",
+		}),
+		apiRetriesTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_api_retries_total",
+			Help: "API retry count from active sessions",
+		}),
+
+		compactEventsTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_compact_events_total",
+			Help: "Context compaction events from active sessions",
+		}),
+		compactPreTokensTotal: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name:    "claude_compact_pre_tokens",
+			Help:    "Distribution of token counts before context compaction",
+			Buckets: []float64{50000, 100000, 150000, 200000, 300000, 500000},
+		}),
+
+		webSearchTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_web_search_total",
+			Help: "Web search requests from active sessions",
+		}),
+		webFetchTotal: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "claude_live_web_fetch_total",
+			Help: "Web fetch requests from active sessions",
+		}),
 	}
 }
 
@@ -276,6 +434,20 @@ func (c *claudeCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.dailyTokens.Describe(ch)
 	c.hourActivity.Describe(ch)
 	c.exporterInfo.Describe(ch)
+
+	c.liveCostTotal.Describe(ch)
+	c.liveCostPrompt.Describe(ch)
+	c.liveCostCompletions.Describe(ch)
+	c.liveCostByModel.Describe(ch)
+	c.turnDuration.Describe(ch)
+	c.toolUseTotal.Describe(ch)
+	c.stopReasonTotal.Describe(ch)
+	c.apiErrorsTotal.Describe(ch)
+	c.apiRetriesTotal.Describe(ch)
+	c.compactEventsTotal.Describe(ch)
+	c.compactPreTokensTotal.Describe(ch)
+	c.webSearchTotal.Describe(ch)
+	c.webFetchTotal.Describe(ch)
 }
 
 func (c *claudeCollector) Collect(ch chan<- prometheus.Metric) {
@@ -302,6 +474,20 @@ func (c *claudeCollector) Collect(ch chan<- prometheus.Metric) {
 	c.dailyTokens.Collect(ch)
 	c.hourActivity.Collect(ch)
 	c.exporterInfo.Collect(ch)
+
+	c.liveCostTotal.Collect(ch)
+	c.liveCostPrompt.Collect(ch)
+	c.liveCostCompletions.Collect(ch)
+	c.liveCostByModel.Collect(ch)
+	c.turnDuration.Collect(ch)
+	c.toolUseTotal.Collect(ch)
+	c.stopReasonTotal.Collect(ch)
+	c.apiErrorsTotal.Collect(ch)
+	c.apiRetriesTotal.Collect(ch)
+	c.compactEventsTotal.Collect(ch)
+	c.compactPreTokensTotal.Collect(ch)
+	c.webSearchTotal.Collect(ch)
+	c.webFetchTotal.Collect(ch)
 }
 
 func (c *claudeCollector) loadStats() (*StatsCache, error) {
@@ -324,9 +510,23 @@ func (c *claudeCollector) cacheMtime() time.Time {
 	return info.ModTime()
 }
 
+// extractMessage resolves the message from either direct field or nested data.message.message
+func (rec *JSONLRecord) extractMessage() *JSONLMessage {
+	if rec.Message != nil {
+		return rec.Message
+	}
+	if rec.Data != nil && rec.Data.Message != nil && rec.Data.Message.Message != nil {
+		return rec.Data.Message.Message
+	}
+	return nil
+}
+
 func (c *claudeCollector) scanLiveSessions() *LiveResult {
 	result := &LiveResult{
-		ModelUsage: make(map[string]*LiveModelUsage),
+		ModelUsage:    make(map[string]*LiveModelUsage),
+		CostByModel:   make(map[string]float64),
+		ToolUseCounts: make(map[string]int),
+		StopReasons:   make(map[string]int),
 	}
 
 	projectsDir := filepath.Join(c.claudeDir, "projects")
@@ -336,7 +536,6 @@ func (c *claudeCollector) scanLiveSessions() *LiveResult {
 
 	cacheMtime := c.cacheMtime()
 
-	// Glob: projects/*/?.jsonl (top-level session files only)
 	pattern := filepath.Join(projectsDir, "*", "*.jsonl")
 	files, err := filepath.Glob(pattern)
 	if err != nil {
@@ -349,7 +548,6 @@ func (c *claudeCollector) scanLiveSessions() *LiveResult {
 		if err != nil {
 			continue
 		}
-		// Only files modified after cache
 		if !info.ModTime().After(cacheMtime) {
 			continue
 		}
@@ -363,7 +561,7 @@ func (c *claudeCollector) scanLiveSessions() *LiveResult {
 			defer f.Close()
 
 			scanner := bufio.NewScanner(f)
-			scanner.Buffer(make([]byte, 0, 1024*1024), 10*1024*1024) // up to 10MB per line
+			scanner.Buffer(make([]byte, 0, 1024*1024), 10*1024*1024)
 			for scanner.Scan() {
 				line := scanner.Bytes()
 				if len(line) == 0 {
@@ -374,32 +572,90 @@ func (c *claudeCollector) scanLiveSessions() *LiveResult {
 				if err := json.Unmarshal(line, &rec); err != nil {
 					continue
 				}
-				if rec.Message == nil {
+
+				// Handle system subtypes
+				if rec.Type == "system" {
+					switch rec.Subtype {
+					case "turn_duration":
+						if rec.DurationMs != nil {
+							result.TurnDurations = append(result.TurnDurations, *rec.DurationMs)
+						}
+					case "api_error":
+						result.APIErrors++
+						if rec.RetryAttempt != nil && *rec.RetryAttempt > 0 {
+							result.APIRetries++
+						}
+					case "compact_boundary":
+						if rec.CompactMetadata != nil {
+							result.CompactEvents++
+							if rec.CompactMetadata.PreTokens > 0 {
+								result.CompactPreTokens = append(result.CompactPreTokens, float64(rec.CompactMetadata.PreTokens))
+							}
+						}
+					}
 					continue
 				}
 
-				inp := ptrVal(rec.Message.Usage.InputTokens)
-				out := ptrVal(rec.Message.Usage.OutputTokens)
-				if inp == 0 && out == 0 {
+				// Handle message records (type=assistant or type=progress)
+				msg := rec.extractMessage()
+				if msg == nil {
 					continue
 				}
 
-				model := shortModel(rec.Message.Model)
+				inp := ptrVal(msg.Usage.InputTokens)
+				out := ptrVal(msg.Usage.OutputTokens)
+
+				model := shortModel(msg.Model)
 				if model == "" {
 					model = "unknown"
 				}
 
-				mu, ok := result.ModelUsage[model]
-				if !ok {
-					mu = &LiveModelUsage{}
-					result.ModelUsage[model] = mu
+				// Token usage
+				if inp > 0 || out > 0 {
+					mu, ok := result.ModelUsage[model]
+					if !ok {
+						mu = &LiveModelUsage{}
+						result.ModelUsage[model] = mu
+					}
+					mu.Input += inp
+					mu.Output += out
+					mu.CacheRead += ptrVal(msg.Usage.CacheReadInputTokens)
+					mu.CacheCreate += ptrVal(msg.Usage.CacheCreationInputTokens)
+					result.MessageCount++
+					sessionHasMessages = true
 				}
-				mu.Input += inp
-				mu.Output += out
-				mu.CacheRead += ptrVal(rec.Message.Usage.CacheReadInputTokens)
-				mu.CacheCreate += ptrVal(rec.Message.Usage.CacheCreationInputTokens)
-				result.MessageCount++
-				sessionHasMessages = true
+
+				// Cost tracking
+				if msg.Usage.Cost != nil && *msg.Usage.Cost > 0 {
+					result.TotalCost += *msg.Usage.Cost
+					result.CostByModel[model] += *msg.Usage.Cost
+				}
+				if msg.Usage.CostDetails != nil {
+					if msg.Usage.CostDetails.UpstreamInferencePromptCost != nil {
+						result.PromptCost += *msg.Usage.CostDetails.UpstreamInferencePromptCost
+					}
+					if msg.Usage.CostDetails.UpstreamInferenceCompletionsCost != nil {
+						result.CompletionsCost += *msg.Usage.CostDetails.UpstreamInferenceCompletionsCost
+					}
+				}
+
+				// Tool usage from content blocks
+				for _, block := range msg.Content {
+					if block.Type == "tool_use" && block.Name != "" {
+						result.ToolUseCounts[block.Name]++
+					}
+				}
+
+				// Stop reason
+				if msg.StopReason != nil && *msg.StopReason != "" {
+					result.StopReasons[*msg.StopReason]++
+				}
+
+				// Server tool use (web search/fetch)
+				if msg.Usage.ServerToolUse != nil {
+					result.WebSearches += msg.Usage.ServerToolUse.WebSearchRequests
+					result.WebFetches += msg.Usage.ServerToolUse.WebFetchRequests
+				}
 			}
 		}()
 
@@ -427,6 +683,9 @@ func (c *claudeCollector) update() {
 	c.dailyTokens.Reset()
 	c.hourActivity.Reset()
 	c.exporterInfo.Reset()
+	c.liveCostByModel.Reset()
+	c.toolUseTotal.Reset()
+	c.stopReasonTotal.Reset()
 
 	stats, err := c.loadStats()
 	if err != nil {
@@ -438,7 +697,8 @@ func (c *claudeCollector) update() {
 
 	// Scan live sessions
 	live := c.scanLiveSessions()
-	log.Printf("live sessions: %d, live messages: %d", live.SessionCount, live.MessageCount)
+	log.Printf("live sessions: %d, live messages: %d, api_errors: %d, compactions: %d",
+		live.SessionCount, live.MessageCount, live.APIErrors, live.CompactEvents)
 
 	// Collect all models
 	allModels := make(map[string]struct{})
@@ -451,7 +711,6 @@ func (c *claudeCollector) update() {
 
 	// Model usage: cache + live
 	for model := range allModels {
-		// Find base from cache
 		var base ModelUsage
 		for raw, u := range stats.ModelUsage {
 			if shortModel(raw) == model {
@@ -473,7 +732,10 @@ func (c *claudeCollector) update() {
 		c.modelOutputTokens.WithLabelValues(model).Set(base.OutputTokens + liveOut)
 		c.modelCacheReadTokens.WithLabelValues(model).Set(base.CacheReadInputTokens + liveCR)
 		c.modelCacheCreateTokens.WithLabelValues(model).Set(base.CacheCreationInputTokens + liveCC)
-		c.modelCostUSD.WithLabelValues(model).Set(base.CostUSD)
+
+		// Cost: cache base + live cost per model
+		liveCostForModel := live.CostByModel[model]
+		c.modelCostUSD.WithLabelValues(model).Set(base.CostUSD + liveCostForModel)
 
 		if liveIn > 0 || liveOut > 0 {
 			c.liveInputTokens.WithLabelValues(model).Set(liveIn)
@@ -572,7 +834,45 @@ func (c *claudeCollector) update() {
 		strconv.Itoa(live.SessionCount),
 	).Set(1)
 
-	log.Printf("metrics updated (lastComputedDate=%s, live_sessions=%d)", stats.LastComputedDate, live.SessionCount)
+	// --- NEW: per-request cost ---
+	c.liveCostTotal.Set(live.TotalCost)
+	c.liveCostPrompt.Set(live.PromptCost)
+	c.liveCostCompletions.Set(live.CompletionsCost)
+	for model, cost := range live.CostByModel {
+		c.liveCostByModel.WithLabelValues(model).Set(cost)
+	}
+
+	// --- NEW: turn duration histogram ---
+	for _, durationMs := range live.TurnDurations {
+		c.turnDuration.Observe(durationMs / 1000.0) // convert ms to seconds
+	}
+
+	// --- NEW: tool usage breakdown ---
+	for tool, count := range live.ToolUseCounts {
+		c.toolUseTotal.WithLabelValues(tool).Set(float64(count))
+	}
+
+	// --- NEW: stop reason ---
+	for reason, count := range live.StopReasons {
+		c.stopReasonTotal.WithLabelValues(reason).Set(float64(count))
+	}
+
+	// --- NEW: API errors ---
+	c.apiErrorsTotal.Set(float64(live.APIErrors))
+	c.apiRetriesTotal.Set(float64(live.APIRetries))
+
+	// --- NEW: context compaction ---
+	c.compactEventsTotal.Set(float64(live.CompactEvents))
+	for _, preTokens := range live.CompactPreTokens {
+		c.compactPreTokensTotal.Observe(preTokens)
+	}
+
+	// --- NEW: web search / fetch ---
+	c.webSearchTotal.Set(float64(live.WebSearches))
+	c.webFetchTotal.Set(float64(live.WebFetches))
+
+	log.Printf("metrics updated (lastComputedDate=%s, live_sessions=%d, live_cost=$%.4f)",
+		stats.LastComputedDate, live.SessionCount, live.TotalCost)
 }
 
 func main() {
