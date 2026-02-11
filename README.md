@@ -1,12 +1,22 @@
 # CC Monitor
 
-开箱即用的 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 用量监控面板。
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-自动采集 Token 消耗、会话数、费用等数据，通过 Grafana 可视化展示。支持实时监控活跃会话。
+[中文文档](README_zh.md)
 
-## 快速开始
+Out-of-the-box usage monitoring dashboard for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-确保已安装 [Docker](https://docs.docker.com/get-docker/)（含 Docker Compose），然后：
+Automatically collects token consumption, sessions, costs and more, visualized through Grafana. Supports real-time active session monitoring.
+
+## Screenshots
+
+![Overview](screenshots/cc-grafana-001.jpg)
+![Trends](screenshots/cc-grafana-002.jpg)
+![Per-Request Metrics](screenshots/cc-grafana-003.jpg)
+
+## Quick Start
+
+Make sure [Docker](https://docs.docker.com/get-docker/) (with Docker Compose) is installed, then:
 
 ```bash
 git clone https://github.com/aireet/cc-monitor.git
@@ -14,12 +24,12 @@ cd cc-monitor
 ./start.sh
 ```
 
-打开浏览器访问 **http://localhost:3000/d/claude-token-monitor**，用户名密码均为 `admin`。
+Open **http://localhost:3000/d/claude-token-monitor** in your browser. Default credentials: `admin` / `admin`.
 
-## 架构
+## Architecture
 
 ```
-~/.claude (只读)
+~/.claude (read-only)
     │
     ├── stats-cache.json ──► ┌──────────────┐     ┌────────────┐     ┌─────────┐
     └── projects/*/?.jsonl ─► │   Exporter   ├────►│ Prometheus ├────►│ Grafana │
@@ -27,54 +37,54 @@ cd cc-monitor
                               └──────────────┘     └────────────┘     └─────────┘
 ```
 
-- **Exporter** — 读取 `stats-cache.json`（历史数据）+ 扫描活跃会话 JSONL 文件（实时数据），暴露 Prometheus 指标
-- **Prometheus** — 每 30s 采集，数据保留 90 天
-- **Grafana** — 预配置数据源和 Dashboard，开箱即用
+- **Exporter** — Reads `stats-cache.json` (historical data) + scans active session JSONL files (real-time data), exposes Prometheus metrics
+- **Prometheus** — Scrapes every 30s, retains data for 90 days
+- **Grafana** — Pre-configured datasource and dashboard, ready to use
 
-## 监控指标
+## Metrics
 
-- Token 消耗总量（输入 / 输出 / 缓存读取 / 缓存创建），按模型分类
-- 费用统计（USD），按模型分类
-- 每日消息数、会话数、工具调用数趋势
-- 每日各模型 Token 用量趋势
-- 按小时分布的活跃度
-- 实时活跃会话数和消息数
+- Total token consumption (input / output / cache read / cache creation), by model
+- Cost statistics (USD), by model
+- Daily message count, session count, and tool call trends
+- Daily token usage trends by model
+- Hourly activity distribution
+- Real-time active sessions and message counts
 
-## 停止 / 重启
+## Stop / Restart
 
 ```bash
-# 停止
+# Stop
 docker compose down
 
-# 重启
+# Restart
 ./start.sh
 ```
 
-## 自定义
+## Configuration
 
-### Claude 数据路径
+### Claude Data Path
 
-默认读取 `~/.claude`。如果路径不同：
+Reads from `~/.claude` by default. To use a different path:
 
 ```bash
 export CLAUDE_HOME=/path/to/.claude
 ./start.sh
 ```
 
-### 端口
+### Ports
 
-修改 `docker-compose.yml` 中对应的端口映射即可：
+Edit the port mappings in `docker-compose.yml`:
 
-| 默认端口 | 服务 |
-|----------|------|
+| Default Port | Service |
+|--------------|---------|
 | 3000 | Grafana |
 | 9099 | Prometheus |
 | 9101 | Exporter |
 
-## 数据安全
+## Data Safety
 
-- 所有 Claude 数据以**只读**方式挂载
-- 所有数据存储在本地，不会上传到任何外部服务
+- All Claude data is mounted as **read-only**
+- All data is stored locally and never uploaded to any external service
 
 ## License
 
