@@ -154,10 +154,6 @@ type LiveResult struct {
 	MessageCount int
 
 	// New per-request metrics from JSONL
-	TotalCost        float64
-	PromptCost       float64
-	CompletionsCost  float64
-	CostByModel      map[string]float64
 	TurnDurations    []float64
 	ToolUseCounts    map[string]int
 	StopReasons      map[string]int
@@ -172,7 +168,11 @@ type LiveResult struct {
 // --- helper ---
 
 func shortModel(name string) string {
-	return strings.ReplaceAll(name, "anthropic/", "")
+	name = strings.ReplaceAll(name, "anthropic/", "")
+	// Normalize version separators: "claude-opus-4.6" → "claude-opus-4-6"
+	// This avoids duplicate model entries with dots vs dashes
+	name = strings.ReplaceAll(name, ".", "-")
+	return name
 }
 
 func ptrVal(p *float64) float64 {
@@ -193,7 +193,6 @@ type claudeCollector struct {
 	modelOutputTokens      *prometheus.GaugeVec
 	modelCacheReadTokens   *prometheus.GaugeVec
 	modelCacheCreateTokens *prometheus.GaugeVec
-	modelCostUSD           *prometheus.GaugeVec
 
 	// live only
 	liveInputTokens  *prometheus.GaugeVec
@@ -222,12 +221,6 @@ type claudeCollector struct {
 
 	// info
 	exporterInfo *prometheus.GaugeVec
-
-	// --- NEW: per-request cost ---
-	liveCostTotal       prometheus.Gauge
-	liveCostPrompt      prometheus.Gauge
-	liveCostCompletions prometheus.Gauge
-	liveCostByModel     *prometheus.GaugeVec
 
 	// --- NEW: turn duration ---
 	turnDuration prometheus.Histogram
@@ -272,11 +265,6 @@ func newCollector(statsFile, claudeDir string) *claudeCollector {
 			Name: "claude_model_cache_creation_tokens_total",
 			Help: "Total cache-creation input tokens by model",
 		}, []string{"model"}),
-		modelCostUSD: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "claude_model_cost_usd",
-			Help: "Total cost in USD by model",
-		}, []string{"model"}),
-
 		liveInputTokens: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "claude_live_input_tokens",
 			Help: "Input tokens from active sessions (not yet in cache)",
@@ -349,23 +337,6 @@ func newCollector(statsFile, claudeDir string) *claudeCollector {
 
 		// --- NEW metrics ---
 
-		liveCostTotal: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "claude_live_cost_usd",
-			Help: "Total cost in USD from active sessions",
-		}),
-		liveCostPrompt: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "claude_live_cost_prompt_usd",
-			Help: "Prompt/input cost in USD from active sessions",
-		}),
-		liveCostCompletions: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "claude_live_cost_completions_usd",
-			Help: "Completions/output cost in USD from active sessions",
-		}),
-		liveCostByModel: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "claude_live_cost_by_model_usd",
-			Help: "Cost in USD from active sessions by model",
-		}, []string{"model"}),
-
 		turnDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Name:    "claude_turn_duration_seconds",
 			Help:    "Distribution of assistant turn durations in seconds",
@@ -417,7 +388,6 @@ func (c *claudeCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.modelOutputTokens.Describe(ch)
 	c.modelCacheReadTokens.Describe(ch)
 	c.modelCacheCreateTokens.Describe(ch)
-	c.modelCostUSD.Describe(ch)
 	c.liveInputTokens.Describe(ch)
 	c.liveOutputTokens.Describe(ch)
 	c.liveSessions.Describe(ch)
@@ -435,10 +405,6 @@ func (c *claudeCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.hourActivity.Describe(ch)
 	c.exporterInfo.Describe(ch)
 
-	c.liveCostTotal.Describe(ch)
-	c.liveCostPrompt.Describe(ch)
-	c.liveCostCompletions.Describe(ch)
-	c.liveCostByModel.Describe(ch)
 	c.turnDuration.Describe(ch)
 	c.toolUseTotal.Describe(ch)
 	c.stopReasonTotal.Describe(ch)
@@ -457,7 +423,6 @@ func (c *claudeCollector) Collect(ch chan<- prometheus.Metric) {
 	c.modelOutputTokens.Collect(ch)
 	c.modelCacheReadTokens.Collect(ch)
 	c.modelCacheCreateTokens.Collect(ch)
-	c.modelCostUSD.Collect(ch)
 	c.liveInputTokens.Collect(ch)
 	c.liveOutputTokens.Collect(ch)
 	c.liveSessions.Collect(ch)
@@ -475,10 +440,6 @@ func (c *claudeCollector) Collect(ch chan<- prometheus.Metric) {
 	c.hourActivity.Collect(ch)
 	c.exporterInfo.Collect(ch)
 
-	c.liveCostTotal.Collect(ch)
-	c.liveCostPrompt.Collect(ch)
-	c.liveCostCompletions.Collect(ch)
-	c.liveCostByModel.Collect(ch)
 	c.turnDuration.Collect(ch)
 	c.toolUseTotal.Collect(ch)
 	c.stopReasonTotal.Collect(ch)
@@ -524,7 +485,6 @@ func (rec *JSONLRecord) extractMessage() *JSONLMessage {
 func (c *claudeCollector) scanLiveSessions() *LiveResult {
 	result := &LiveResult{
 		ModelUsage:    make(map[string]*LiveModelUsage),
-		CostByModel:   make(map[string]float64),
 		ToolUseCounts: make(map[string]int),
 		StopReasons:   make(map[string]int),
 	}
@@ -625,20 +585,6 @@ func (c *claudeCollector) scanLiveSessions() *LiveResult {
 					sessionHasMessages = true
 				}
 
-				// Cost tracking
-				if msg.Usage.Cost != nil && *msg.Usage.Cost > 0 {
-					result.TotalCost += *msg.Usage.Cost
-					result.CostByModel[model] += *msg.Usage.Cost
-				}
-				if msg.Usage.CostDetails != nil {
-					if msg.Usage.CostDetails.UpstreamInferencePromptCost != nil {
-						result.PromptCost += *msg.Usage.CostDetails.UpstreamInferencePromptCost
-					}
-					if msg.Usage.CostDetails.UpstreamInferenceCompletionsCost != nil {
-						result.CompletionsCost += *msg.Usage.CostDetails.UpstreamInferenceCompletionsCost
-					}
-				}
-
 				// Tool usage from content blocks
 				for _, block := range msg.Content {
 					if block.Type == "tool_use" && block.Name != "" {
@@ -673,7 +619,6 @@ func (c *claudeCollector) update() {
 	c.modelOutputTokens.Reset()
 	c.modelCacheReadTokens.Reset()
 	c.modelCacheCreateTokens.Reset()
-	c.modelCostUSD.Reset()
 	c.liveInputTokens.Reset()
 	c.liveOutputTokens.Reset()
 	c.todayTokens.Reset()
@@ -683,7 +628,6 @@ func (c *claudeCollector) update() {
 	c.dailyTokens.Reset()
 	c.hourActivity.Reset()
 	c.exporterInfo.Reset()
-	c.liveCostByModel.Reset()
 	c.toolUseTotal.Reset()
 	c.stopReasonTotal.Reset()
 
@@ -732,10 +676,6 @@ func (c *claudeCollector) update() {
 		c.modelOutputTokens.WithLabelValues(model).Set(base.OutputTokens + liveOut)
 		c.modelCacheReadTokens.WithLabelValues(model).Set(base.CacheReadInputTokens + liveCR)
 		c.modelCacheCreateTokens.WithLabelValues(model).Set(base.CacheCreationInputTokens + liveCC)
-
-		// Cost: cache base + live cost per model
-		liveCostForModel := live.CostByModel[model]
-		c.modelCostUSD.WithLabelValues(model).Set(base.CostUSD + liveCostForModel)
 
 		if liveIn > 0 || liveOut > 0 {
 			c.liveInputTokens.WithLabelValues(model).Set(liveIn)
@@ -834,14 +774,6 @@ func (c *claudeCollector) update() {
 		strconv.Itoa(live.SessionCount),
 	).Set(1)
 
-	// --- NEW: per-request cost ---
-	c.liveCostTotal.Set(live.TotalCost)
-	c.liveCostPrompt.Set(live.PromptCost)
-	c.liveCostCompletions.Set(live.CompletionsCost)
-	for model, cost := range live.CostByModel {
-		c.liveCostByModel.WithLabelValues(model).Set(cost)
-	}
-
 	// --- NEW: turn duration histogram ---
 	for _, durationMs := range live.TurnDurations {
 		c.turnDuration.Observe(durationMs / 1000.0) // convert ms to seconds
@@ -871,8 +803,8 @@ func (c *claudeCollector) update() {
 	c.webSearchTotal.Set(float64(live.WebSearches))
 	c.webFetchTotal.Set(float64(live.WebFetches))
 
-	log.Printf("metrics updated (lastComputedDate=%s, live_sessions=%d, live_cost=$%.4f)",
-		stats.LastComputedDate, live.SessionCount, live.TotalCost)
+	log.Printf("metrics updated (lastComputedDate=%s, live_sessions=%d)",
+		stats.LastComputedDate, live.SessionCount)
 }
 
 func main() {
