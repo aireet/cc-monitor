@@ -81,7 +81,7 @@ scrape_configs:
 #### 导入 Grafana Dashboard
 
 1. 在 Grafana 中进入 **Dashboards > Import**
-2. 上传本仓库中的 `grafana/dashboards/claude-tokens.json` 文件
+2. 上传 [Dashboard JSON 文件](https://github.com/aireet/cc-exporter/blob/main/grafana/dashboards/claude-tokens.json)
 3. 选择你的 Prometheus 数据源
 4. 点击 **Import**
 

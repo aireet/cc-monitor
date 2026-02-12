@@ -81,7 +81,7 @@ scrape_configs:
 #### Import Grafana Dashboard
 
 1. In Grafana, go to **Dashboards > Import**
-2. Upload the JSON file from `grafana/dashboards/claude-tokens.json` in this repo
+2. Upload the [dashboard JSON file](https://github.com/aireet/cc-exporter/blob/main/grafana/dashboards/claude-tokens.json)
 3. Select your Prometheus data source
 4. Click **Import**
 
