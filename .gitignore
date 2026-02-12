@@ -1,2 +1,4 @@
 grafana-data/
 prometheus-data/
+PLAN.md
+analyze_jsonl.py
