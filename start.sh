@@ -3,7 +3,7 @@ set -e
 
 cd "$(dirname "$0")"
 
-echo "=== Claude Code Monitor ==="
+echo "=== CC Exporter ==="
 echo ""
 
 # Parse arguments

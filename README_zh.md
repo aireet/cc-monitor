@@ -1,4 +1,4 @@
-# CC Monitor
+# CC Exporter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -21,8 +21,8 @@
 一键部署 Exporter + Prometheus + Grafana，含预配置 Dashboard。
 
 ```bash
-git clone https://github.com/aireet/cc-monitor.git
-cd cc-monitor
+git clone https://github.com/aireet/cc-exporter.git
+cd cc-exporter
 ./start.sh
 ```
 
@@ -39,8 +39,8 @@ cd cc-monitor
 适合已有 Prometheus 和 Grafana 的用户，只部署指标采集器。
 
 ```bash
-git clone https://github.com/aireet/cc-monitor.git
-cd cc-monitor
+git clone https://github.com/aireet/cc-exporter.git
+cd cc-exporter
 ./start.sh --exporter
 ```
 

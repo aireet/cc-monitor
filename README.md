@@ -1,4 +1,4 @@
-# CC Monitor
+# CC Exporter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -21,8 +21,8 @@ Automatically collects token consumption, sessions, tool usage and more, visuali
 One-command deploy: Exporter + Prometheus + Grafana with pre-configured dashboard.
 
 ```bash
-git clone https://github.com/aireet/cc-monitor.git
-cd cc-monitor
+git clone https://github.com/aireet/cc-exporter.git
+cd cc-exporter
 ./start.sh
 ```
 
@@ -39,8 +39,8 @@ Open **http://localhost:3000/d/claude-token-monitor** in your browser. Default c
 For users who already have Prometheus and Grafana. This deploys only the metrics exporter.
 
 ```bash
-git clone https://github.com/aireet/cc-monitor.git
-cd cc-monitor
+git clone https://github.com/aireet/cc-exporter.git
+cd cc-exporter
 ./start.sh --exporter
 ```
 
