@@ -1,6 +1,6 @@
 services:
   claude-exporter:
-    build: ./exporter
+    image: xuexuexue1994/cc-exporter:latest
     container_name: claude-exporter
     restart: unless-stopped
     ports:

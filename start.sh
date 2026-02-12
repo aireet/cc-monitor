@@ -40,8 +40,8 @@ if [ "$MODE" = "exporter" ]; then
   COMPOSE_FILE="docker-compose.exporter.yml"
 
   echo ""
-  echo "[1/2] Building exporter..."
-  docker compose -f "$COMPOSE_FILE" build --quiet claude-exporter
+  echo "[1/2] Pulling exporter..."
+  docker compose -f "$COMPOSE_FILE" pull
 
   echo "[2/2] Starting exporter..."
   docker compose -f "$COMPOSE_FILE" up -d
@@ -69,8 +69,8 @@ else
   chmod 777 prometheus-data grafana-data
 
   echo ""
-  echo "[1/2] Building exporter..."
-  docker compose -f "$COMPOSE_FILE" build --quiet claude-exporter
+  echo "[1/2] Pulling images..."
+  docker compose -f "$COMPOSE_FILE" pull
 
   echo "[2/2] Starting services..."
   docker compose -f "$COMPOSE_FILE" up -d
