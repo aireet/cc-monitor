@@ -1,6 +1,9 @@
 # CC Exporter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![GitHub stars](https://img.shields.io/github/stars/aireet/cc-exporter)](https://github.com/aireet/cc-exporter/stargazers)
+[![GitHub last commit](https://img.shields.io/github/last-commit/aireet/cc-exporter)](https://github.com/aireet/cc-exporter/commits/main)
 
 [English](README.md)
 
