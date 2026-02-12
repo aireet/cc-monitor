@@ -4,6 +4,7 @@
 [![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![GitHub stars](https://img.shields.io/github/stars/aireet/cc-exporter)](https://github.com/aireet/cc-exporter/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/aireet/cc-exporter)](https://github.com/aireet/cc-exporter/commits/main)
+[![Docker Hub](https://img.shields.io/docker/pulls/xuexuexue1994/cc-exporter?logo=docker&label=Docker%20Hub)](https://hub.docker.com/r/xuexuexue1994/cc-exporter)
 
 [English](README.md)
 
@@ -40,6 +41,19 @@ cd cc-exporter
 ### 方案二：仅 Exporter
 
 适合已有 Prometheus 和 Grafana 的用户，只部署指标采集器。
+
+**通过 Docker Hub（无需克隆）：**
+
+```bash
+docker run -d --name claude-exporter \
+  -p 9101:9101 \
+  -v ~/.claude:/data/claude:ro \
+  -e CLAUDE_STATS_FILE=/data/claude/stats-cache.json \
+  -e CLAUDE_DIR=/data/claude \
+  xuexuexue1994/cc-exporter:latest
+```
+
+**或通过 start.sh：**
 
 ```bash
 git clone https://github.com/aireet/cc-exporter.git

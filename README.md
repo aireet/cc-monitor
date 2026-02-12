@@ -4,6 +4,7 @@
 [![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![GitHub stars](https://img.shields.io/github/stars/aireet/cc-exporter)](https://github.com/aireet/cc-exporter/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/aireet/cc-exporter)](https://github.com/aireet/cc-exporter/commits/main)
+[![Docker Hub](https://img.shields.io/docker/pulls/xuexuexue1994/cc-exporter?logo=docker&label=Docker%20Hub)](https://hub.docker.com/r/xuexuexue1994/cc-exporter)
 
 [中文文档](README_zh.md)
 
@@ -40,6 +41,19 @@ Open **http://localhost:3000/d/claude-token-monitor** in your browser. Default c
 ### Option 2: Exporter Only
 
 For users who already have Prometheus and Grafana. This deploys only the metrics exporter.
+
+**Via Docker Hub (no clone needed):**
+
+```bash
+docker run -d --name claude-exporter \
+  -p 9101:9101 \
+  -v ~/.claude:/data/claude:ro \
+  -e CLAUDE_STATS_FILE=/data/claude/stats-cache.json \
+  -e CLAUDE_DIR=/data/claude \
+  xuexuexue1994/cc-exporter:latest
+```
+
+**Or via start.sh:**
 
 ```bash
 git clone https://github.com/aireet/cc-exporter.git
