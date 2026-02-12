@@ -1,0 +1,13 @@
+services:
+  claude-exporter:
+    build: ./exporter
+    container_name: claude-exporter
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:9101:9101"
+    volumes:
+      - ${CLAUDE_HOME:-${HOME}/.claude}:/data/claude:ro
+    environment:
+      - CLAUDE_STATS_FILE=/data/claude/stats-cache.json
+      - CLAUDE_DIR=/data/claude
+      - EXPORTER_PORT=9101
